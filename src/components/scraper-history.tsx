@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Trash2, ExternalLink, Eye } from "lucide-react"
 import type { ScrapedProduct } from "@/types/product"
+import Image from "next/image"
 
 interface HistoryItem extends ScrapedProduct {
   scrapedAt: string
@@ -74,7 +75,7 @@ export function ScraperHistory({ onSelectProduct }: ScraperHistoryProps) {
               >
                 <div className="flex gap-3">
                   {item.images[0] && (
-                    <img
+                    <Image
                       src={item.images[0] || "/placeholder.svg"}
                       alt={item.title}
                       className="h-16 w-16 rounded object-cover flex-shrink-0 bg-white"
