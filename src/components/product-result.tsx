@@ -4,9 +4,9 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, ExternalLink } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
 import type { ScrapedProduct } from "@/types/product"
 import { ImageGallery } from "@/components/image-gallery"
+import { toast } from "sonner"
 
 interface ProductResultProps {
   product: ScrapedProduct
@@ -15,7 +15,6 @@ interface ProductResultProps {
 export function ProductResult({ product }: ProductResultProps) {
   const [copiedTitle, setCopiedTitle] = useState(false)
   const [copiedDescription, setCopiedDescription] = useState(false)
-  const { toast } = useToast()
 
   const copyToClipboard = async (text: string, type: "title" | "description") => {
     try {
@@ -29,16 +28,9 @@ export function ProductResult({ product }: ProductResultProps) {
         setTimeout(() => setCopiedDescription(false), 2000)
       }
 
-      toast({
-        title: "Copiado!",
-        description: `${type === "title" ? "Título" : "Descrição"} copiado para a área de transferência`,
-      })
+      toast.success(`Copiado! ${type === "title" ? "Título" : "Descrição"} copiado para a área de transferência`)
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível copiar",
-        variant: "destructive",
-      })
+      toast.error("Não foi possível copiar")
     }
   }
 
