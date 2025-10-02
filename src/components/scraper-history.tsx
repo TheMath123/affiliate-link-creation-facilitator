@@ -76,6 +76,8 @@ export function ScraperHistory({ onSelectProduct }: ScraperHistoryProps) {
                 <div className="flex gap-3">
                   {item.images[0] && (
                     <Image
+                      width={500}
+                      height={500}
                       src={item.images[0] || "/placeholder.svg"}
                       alt={item.title}
                       className="h-16 w-16 rounded object-cover flex-shrink-0 bg-white"

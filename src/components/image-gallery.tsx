@@ -70,6 +70,8 @@ export function ImageGallery({ images, productTitle }: ImageGalleryProps) {
               className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
             >
               <Image
+                width={500}
+                height={500}
                 src={image || "/placeholder.svg"}
                 alt={`${productTitle} - Imagem ${index + 1}`}
                 className="h-full w-full object-contain cursor-pointer transition-transform hover:scale-105 bg-white"
@@ -111,6 +113,8 @@ export function ImageGallery({ images, productTitle }: ImageGalleryProps) {
 
               <div className="flex items-center justify-center min-h-[400px] max-h-[80vh] p-4">
                 <Image
+                  width={500}
+                  height={500}
                   src={images[selectedImageIndex] || "/placeholder.svg"}
                   alt={`${productTitle} - Imagem ${selectedImageIndex + 1}`}
                   className="max-w-full max-h-full object-contain"
