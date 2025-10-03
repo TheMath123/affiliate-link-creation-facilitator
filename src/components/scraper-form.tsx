@@ -38,7 +38,7 @@ export function ScraperForm({ selectedProduct, onProductChange }: ScraperFormPro
     setProduct(null)
 
     try {
-      const response = await fetch("/api/scrape", {
+      const response = await fetch(process.env.APP_URL + "/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
