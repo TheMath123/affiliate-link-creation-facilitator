@@ -1,3 +1,4 @@
+import { log } from "@logtail/next";
 import * as cheerio from "cheerio";
 
 function resolveUrl(candidate: string | undefined, base: string) {
@@ -206,7 +207,7 @@ export async function scrapeMercadoLivre(url: string) {
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  console.log($);
+  log.info(JSON.stringify($));
 
   // Título
   const title =
