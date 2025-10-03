@@ -207,14 +207,14 @@ export async function scrapeMercadoLivre(url: string) {
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  log.info(JSON.stringify($.parseHTML()));
-
   // Título
   const title =
     $("h1.ui-pdp-title").first().text().trim() ||
     $(".item-title__primary").first().text().trim() ||
     $("meta[property='og:title']").attr("content")?.trim() ||
     "";
+
+  log.info(title);
 
   // Descrição (JSON-LD -> DOM -> meta)
   let description =
