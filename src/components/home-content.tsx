@@ -7,7 +7,7 @@ import type { ScrapedProduct } from "@/types/product"
 
 export function HomeContent() {
   const [selectedProduct, setSelectedProduct] = useState<ScrapedProduct | null>(null)
-
+  console.log('selectedProduct', selectedProduct);
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
