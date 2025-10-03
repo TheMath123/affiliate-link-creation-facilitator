@@ -206,6 +206,8 @@ export async function scrapeMercadoLivre(url: string) {
   const html = await response.text();
   const $ = cheerio.load(html);
 
+  console.log($);
+
   // Título
   const title =
     $("h1.ui-pdp-title").first().text().trim() ||
