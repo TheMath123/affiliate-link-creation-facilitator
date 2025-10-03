@@ -207,7 +207,7 @@ export async function scrapeMercadoLivre(url: string) {
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  log.info(JSON.stringify($));
+  log.info(JSON.stringify($.parseHTML()));
 
   // Título
   const title =
