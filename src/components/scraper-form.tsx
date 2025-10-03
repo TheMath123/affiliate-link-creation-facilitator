@@ -47,7 +47,7 @@ export function ScraperForm({ selectedProduct, onProductChange }: ScraperFormPro
     }
 
     const data = res.data
-
+    console.log('data', data);
     setProduct(data)
     onProductChange?.(data)
 

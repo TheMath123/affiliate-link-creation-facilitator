@@ -212,9 +212,6 @@ export async function scrapeMercadoLivre(url: string) {
     $(".item-title__primary").first().text().trim() ||
     $("meta[property='og:title']").attr("content")?.trim() ||
     "";
-  if (!title) {
-    throw new Error("Não foi possível extrair o título do produto");
-  }
 
   // Descrição (JSON-LD -> DOM -> meta)
   let description =
