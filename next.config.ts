@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
+import { withBetterStack } from "@logtail/next";
 
-const nextConfig: NextConfig = {
+const nextConfig: NextConfig = withBetterStack({
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "http2.mlstatic.com", pathname: "/**" },
@@ -8,6 +9,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "ae04.alicdn.com", pathname: "/**" },
     ],
   },
-};
+});
 
 export default nextConfig;
