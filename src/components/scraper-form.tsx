@@ -8,6 +8,7 @@ import { Loader2, Search } from "lucide-react"
 import { ProductResult } from "@/components/product-result"
 import type { ScrapedProduct } from "@/types/product"
 import { toast } from "sonner"
+import { scrapeProduct } from "@/actions/scraper"
 
 interface ScraperFormProps {
   selectedProduct?: ScrapedProduct | null
@@ -38,17 +39,7 @@ export function ScraperForm({ selectedProduct, onProductChange }: ScraperFormPro
     setProduct(null)
 
     try {
-      const response = await fetch(process.env.APP_URL + "/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao fazer scraping")
-      }
+      const data = await scrapeProduct(url)
 
       setProduct(data)
       onProductChange?.(data)
