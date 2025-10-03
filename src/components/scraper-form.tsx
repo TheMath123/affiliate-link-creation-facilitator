@@ -38,25 +38,28 @@ export function ScraperForm({ selectedProduct, onProductChange }: ScraperFormPro
     setLoading(true)
     setProduct(null)
 
-    try {
-      const data = await scrapeProduct(url)
+    const res = await scrapeProduct(url)
 
-      setProduct(data)
-      onProductChange?.(data)
-
-      // Save to localStorage for history
-      const history = JSON.parse(localStorage.getItem("scraper-history") || "[]")
-      history.unshift({ ...data, scrapedAt: new Date().toISOString() })
-      localStorage.setItem("scraper-history", JSON.stringify(history.slice(0, 10)))
-
-      window.dispatchEvent(new Event("history-updated"))
-
-      toast.success("Sucesso! Produto extraído com sucesso")
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao fazer scraping")
-    } finally {
+    if (!res.success) {
+      toast.error(res.error)
       setLoading(false)
+      return
     }
+
+    const data = res.data
+
+    setProduct(data)
+    onProductChange?.(data)
+
+    // Save to localStorage for history
+    const history = JSON.parse(localStorage.getItem("scraper-history") || "[]")
+    history.unshift({ ...data, scrapedAt: new Date().toISOString() })
+    localStorage.setItem("scraper-history", JSON.stringify(history.slice(0, 10)))
+
+    window.dispatchEvent(new Event("history-updated"))
+
+    toast.success("Sucesso! Produto extraído com sucesso")
+    setLoading(false)
   }
 
   return (

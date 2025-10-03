@@ -10,8 +10,10 @@ export async function scrapeProduct(url: string) {
 
   const data = await response.json();
   if (!response.ok) {
-    console.log(response);
-    throw new Error(data.error || "Erro ao fazer scraping");
+    return {
+      success: false,
+      error: data.error || "Erro ao fazer scraping",
+    };
   }
-  return data;
+  return { success: true, data };
 }
