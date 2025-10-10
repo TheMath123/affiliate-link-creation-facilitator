@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Visão geral
 
-## Getting Started
+Aplicação Next.js que facilita a criação de material para links de afiliado a partir de produtos do Mercado Livre e AliExpress. A interface permite colar a URL de um produto, coleta metadados relevantes por meio de scraping e disponibiliza título, descrição e galeria de imagens preparados para reutilização.
 
-First, run the development server:
+- **Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS 4, Radix UI, Sonner, Biome.
+- **Extração:** Gemini 1.5 Flash analisa o HTML bruto e retorna JSON estruturado.
+- **Deploy alvo:** Vercel (ou qualquer plataforma compatível com Next.js App Router).
+- **Público:** afiliados que precisam montar páginas rapidamente com informações confiáveis do produto original.
+
+## Como funciona
+
+1. Usuário informa a URL do produto (mercadolivre.com ou aliexpress.com) no formulário principal.
+2. O componente `ScraperForm` aciona a server action `scrapeProduct` (`src/actions/scraper.ts`).
+3. A server action chama a rota interna `POST /api/scrape`, que valida a URL e delega para `src/lib/scrapers`.
+4. O `scrapeProduct` da camada de biblioteca identifica a origem e aciona o scraper específico (`mercado-livre.ts` ou `aliexpress.ts`).
+5. Cada scraper faz `fetch` da página, envia o HTML para o Gemini e recebe JSON com título, descrição, imagens, preço e impostos.
+6. A resposta é exibida em `ProductResult` e armazenada no histórico local (`localStorage`).
+
+Mais detalhes sobre a arquitetura e os fluxos estão em `docs/architecture.md`.
+
+## Execução local
 
 ```bash
+npm install
+cp .env.example .env.local # defina APP_URL, GEMINI_API_KEY e chaves da Better Stack
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- A aplicação assume que `APP_URL` aponta para a origem onde o app está rodando (por exemplo `http://localhost:3000`).
+- `GEMINI_API_KEY` habilita chamadas ao modelo da família Gemini para extração.
+- `NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN` e `NEXT_PUBLIC_BETTER_STACK_INGESTING_URL` são necessários quando o logging centralizado estiver habilitado (via `@logtail/next`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts úteis
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev`: inicia o servidor de desenvolvimento com Turbopack.
+- `npm run build`: build de produção.
+- `npm run start`: inicia a versão compilada.
+- `npm run lint`: validação com Biome.
+- `npm run format`: formatação automática.
 
-## Learn More
+## Testes e verificação
 
-To learn more about Next.js, take a look at the following resources:
+No momento o projeto não possui suíte automatizada; execute `npm run lint` antes de criar commits e valide manualmente os fluxos principais:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Extração de produto do Mercado Livre e AliExpress.
+- Persistência e remoção no histórico local.
+- Visualização e cópia de título/descrição/imagens.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estrutura de diretórios
 
-## Deploy on Vercel
+```
+src/
+	actions/           # Server actions chamadas pela camada de UI
+	app/               # App Router do Next.js (páginas, rota API)
+	components/        # Componentes React (UI, formulário, histórico, galeria)
+	lib/               # Scrapers específicos por origem e utilidades
+	types/             # Definição de tipos compartilhados
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Consulte `docs/architecture.md` para uma documentação aprofundada.
