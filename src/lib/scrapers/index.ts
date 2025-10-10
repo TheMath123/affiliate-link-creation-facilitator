@@ -1,5 +1,6 @@
 import { scrapeMercadoLivre } from "./mercado-livre";
 import { scrapeAliExpress } from "./aliexpress";
+import { scrapeShopee } from "./shopee";
 
 export async function scrapeProduct(url: string) {
   // Detect source from URL
@@ -7,7 +8,11 @@ export async function scrapeProduct(url: string) {
     return scrapeMercadoLivre(url);
   } else if (url.includes("aliexpress.com")) {
     return scrapeAliExpress(url);
+  } else if (url.includes("shopee.")) {
+    return scrapeShopee(url);
   } else {
-    throw new Error("URL não suportada. Use Mercado Livre ou AliExpress.");
+    throw new Error(
+      "URL não suportada. Use Mercado Livre, AliExpress ou Shopee.",
+    );
   }
 }
