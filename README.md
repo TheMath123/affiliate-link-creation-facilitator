@@ -4,17 +4,19 @@ Aplicação Next.js que facilita a criação de material para links de afiliado 
 
 - **Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS 4, Radix UI, Sonner, Biome.
 - **Extração:** Gemini 1.5 Flash analisa o HTML bruto e retorna JSON estruturado.
+- **Segurança:** acesso protegido por login (usuário/senha) com sessão em cookie HTTP-only.
 - **Deploy alvo:** Vercel (ou qualquer plataforma compatível com Next.js App Router).
 - **Público:** afiliados que precisam montar páginas rapidamente com informações confiáveis do produto original.
 
 ## Como funciona
 
-1. Usuário informa a URL do produto (mercadolivre.com, aliexpress.com ou shopee.) no formulário principal.
-2. O componente `ScraperForm` aciona a server action `scrapeProduct` (`src/actions/scraper.ts`).
-3. A server action chama a rota interna `POST /api/scrape`, que valida a URL e delega para `src/lib/scrapers`.
-4. O `scrapeProduct` da camada de biblioteca identifica a origem e aciona o scraper específico (`mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`).
-5. Cada scraper faz `fetch` da página, envia o HTML para o Gemini e recebe JSON com título, descrição, imagens, preço e impostos.
-6. A resposta é exibida em `ProductResult` e armazenada no histórico local (`localStorage`).
+1. Usuário realiza login com as credenciais definidas nas variáveis de ambiente.
+2. Usuário informa a URL do produto (mercadolivre.com, aliexpress.com ou shopee.) no formulário principal.
+3. O componente `ScraperForm` aciona a server action `scrapeProduct` (`src/actions/scraper.ts`).
+4. A server action chama a rota interna `POST /api/scrape`, que valida a URL e delega para `src/lib/scrapers`.
+5. O `scrapeProduct` da camada de biblioteca identifica a origem e aciona o scraper específico (`mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`).
+6. Cada scraper faz `fetch` da página, envia o HTML para o Gemini e recebe JSON com título, descrição, imagens, preço e impostos (com fallback local quando necessário).
+7. A resposta é exibida em `ProductResult` e armazenada no histórico local (`localStorage`).
 
 Mais detalhes sobre a arquitetura e os fluxos estão em `docs/architecture.md`.
 
@@ -22,14 +24,14 @@ Mais detalhes sobre a arquitetura e os fluxos estão em `docs/architecture.md`.
 
 ```bash
 npm install
-cp .env.example .env.local # defina APP_URL, GEMINI_API_KEY e chaves da Better Stack
+cp .env.example .env.local # defina APP_URL, GEMINI_API_KEY e credenciais de login
 npm run dev
 ```
 
 - A aplicação assume que `APP_URL` aponta para a origem onde o app está rodando (por exemplo `http://localhost:3000`).
 - `GEMINI_API_KEY` habilita chamadas ao modelo da família Gemini para extração.
-- `GEMINI_MODEL` (opcional) permite trocar o modelo padrão (`gemini-1.5-flash`).
-- `NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN` e `NEXT_PUBLIC_BETTER_STACK_INGESTING_URL` são necessários quando o logging centralizado estiver habilitado (via `@logtail/next`).
+- `GEMINI_MODEL` (opcional) permite trocar o modelo padrão (`gemini-2.0-flash-001`).
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD` e `AUTH_SECRET` controlam as credenciais e a assinatura da sessão.
 
 ## Scripts úteis
 
@@ -43,6 +45,7 @@ npm run dev
 
 No momento o projeto não possui suíte automatizada; execute `npm run lint` antes de criar commits e valide manualmente os fluxos principais:
 
+- Fluxo de autenticação (login/logout) e proteção do painel.
 - Extração de produto do Mercado Livre, AliExpress e Shopee.
 - Persistência e remoção no histórico local.
 - Visualização e cópia de título/descrição/imagens.

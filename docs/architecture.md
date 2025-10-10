@@ -7,6 +7,10 @@ Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre
 ## Visão macro da arquitetura
 
 ```
+[LoginForm] --(server action)--> [auth/loginAction] --(set cookie)-->
+                                                   [HTTP-only session cookie]
+                                                         |
+                                                         v
 [Interface React] --(form submit)--> [Server Action scrapeProduct]
   |                                   |
   |                                   v
@@ -36,15 +40,17 @@ Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre
 
 ### 1. Extração de produto
 
-1. Usuário submete URL no `ScraperForm` (`src/components/scraper-form.tsx`).
-2. Server action `scrapeProduct` (`src/actions/scraper.ts`) monta uma requisição HTTP para `APP_URL/api/scrape`.
-3. Rota `POST /api/scrape` (`src/app/api/scrape/route.ts`):
+1. Usuário acessa `/login`, envia credenciais para `loginAction` (`src/actions/auth.ts`) e recebe cookie de sessão.
+2. Ao acessar rotas protegidas (`(protected)`), o layout verifica o cookie e redireciona anonimamente para `/login`.
+3. Usuário submete URL no `ScraperForm` (`src/components/scraper-form.tsx`).
+4. Server action `scrapeProduct` (`src/actions/scraper.ts`) monta uma requisição HTTP para `APP_URL/api/scrape`, anexando o cookie de sessão.
+5. Rota `POST /api/scrape` (`src/app/api/scrape/route.ts`):
    - Garante que o corpo contenha `url` válida.
    - Chama `scrapeProduct` da biblioteca (`src/lib/scrapers/index.ts`).
-4. `src/lib/scrapers/index.ts` detecta a origem e delega para `mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`.
-5. Scraper específico: realiza `fetch` com cabeçalhos que imitam navegadores reais, passa HTML e contexto para `extractProductWithGemini` (`src/lib/ai/gemini.ts`) e valida o JSON retornado.
-6. Resposta retorna como `ScrapedProduct` (`src/types/product.ts`). A UI atualiza o estado e renderiza `ProductResult`.
-7. Dados são persistidos em `localStorage` e emitido evento `history-updated` para sincronizar o componente `ScraperHistory`.
+6. `src/lib/scrapers/index.ts` detecta a origem e delega para `mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`.
+7. Scraper específico: realiza `fetch` com cabeçalhos que imitam navegadores reais, passa HTML e contexto para `extractProductWithGemini` (`src/lib/ai/gemini.ts`) e valida o JSON retornado.
+8. Resposta retorna como `ScrapedProduct` (`src/types/product.ts`). A UI atualiza o estado e renderiza `ProductResult`.
+9. Dados são persistidos em `localStorage` e emitido evento `history-updated` para sincronizar o componente `ScraperHistory`.
 
 ### 2. Histórico local
 
@@ -105,6 +111,13 @@ export interface ScrapedProduct {
 - Aplica prompt-base em português, exige retorno 100% JSON e limita o payload de HTML enviado.
 - Faz pós-processamento: valida campos obrigatórios, deduplica imagens, garante fallback de URL.
 - Lança erros explícitos quando o modelo não retorna JSON parseável ou omite dados essenciais (ex.: título).
+
+### Autenticação
+
+- `loginAction` (`src/actions/auth.ts`) valida usuário/senha definidos em `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
+- Em caso de sucesso, gera um token determinístico usando `AUTH_SECRET` e persiste cookie HTTP-only (`affiliate_session`).
+- `logoutAction` revoga o cookie e redireciona para `/login`.
+- O layout protegido (`src/app/(protected)/layout.tsx`) e a API (`src/app/api/scrape/route.ts`) verificam o token por comparação em tempo constante.
 
 ## Camada de apresentação
 
