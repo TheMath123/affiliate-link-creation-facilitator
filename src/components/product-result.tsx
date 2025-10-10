@@ -13,8 +13,28 @@ interface ProductResultProps {
 }
 
 export function ProductResult({ product }: ProductResultProps) {
+  console.log(product)
   const [copiedTitle, setCopiedTitle] = useState(false)
   const [copiedDescription, setCopiedDescription] = useState(false)
+
+  const formatMoney = (value: ScrapedProduct["price"]) => {
+    if (value === undefined || value === null) return null
+    if (typeof value === "number") {
+      return value.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim()
+      return trimmed.length > 0 ? trimmed : null
+    }
+    return null
+  }
+
+  const formattedPrice = formatMoney(product.price)
+  const formattedTax = formatMoney(product.estimatedTax)
+  const shouldShowTax = product.source === "AliExpress" && Boolean(formattedTax)
 
   const copyToClipboard = async (text: string, type: "title" | "description") => {
     try {
@@ -29,7 +49,7 @@ export function ProductResult({ product }: ProductResultProps) {
       }
 
       toast.success(`Copiado! ${type === "title" ? "Título" : "Descrição"} copiado para a área de transferência`)
-    } catch (error) {
+    } catch (_error) {
       toast.error("Não foi possível copiar")
     }
   }
@@ -67,6 +87,19 @@ export function ProductResult({ product }: ProductResultProps) {
             </Button>
           </div>
         </CardHeader>
+        {formattedPrice && (
+          <CardContent className="pt-0">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Preço</p>
+              <p className="text-2xl font-semibold text-primary">{formattedPrice}</p>
+              {shouldShowTax && (
+                <p className="text-sm text-muted-foreground">
+                  Taxa estimada: <span className="font-medium text-foreground">{formattedTax}</span>
+                </p>
+              )}
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {product.description && (

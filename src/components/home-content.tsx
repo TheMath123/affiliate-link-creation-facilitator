@@ -14,7 +14,7 @@ export function HomeContent() {
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-balance">Product Scraper</h1>
           <p className="mt-2 text-muted-foreground text-pretty">
-            Extraia informações de produtos do Mercado Livre e AliExpress
+            Extraia informações de produtos do Mercado Livre, AliExpress e Shopee
           </p>
         </div>
       </header>

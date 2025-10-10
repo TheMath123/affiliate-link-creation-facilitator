@@ -22,6 +22,7 @@ Rules:
 - Respond ONLY with JSON. No prose, code fences or explanations.`;
 
 const HTML_TRUNCATE_LENGTH = 100_000;
+const MODEL_NAME = env.GEMINI_MODEL;
 
 let singleton: GoogleGenerativeAI | null = null;
 
@@ -133,7 +134,7 @@ export async function extractProductWithGemini(
 ): Promise<ScrapedProduct> {
   const client = getClient();
   const model = client.getGenerativeModel({
-    model: "gemini-1.5-flash-latest",
+    model: "gemini-2.0-flash-001",
     generationConfig: {
       temperature: 0.2,
       topP: 0.8,
@@ -153,14 +154,24 @@ export async function extractProductWithGemini(
     .filter(Boolean)
     .join("\n\n");
 
-  const result = await model.generateContent({
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: prompt }],
-      },
-    ],
-  });
+  const result = await model
+    .generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("404") && message.includes("models/")) {
+        throw new Error(
+          `Modelo Gemini '${MODEL_NAME}' indisponível para esta API. Ajuste a variável GEMINI_MODEL (ex.: gemini-1.5-flash) ou verifique sua chave. Mensagem original: ${message}`,
+        );
+      }
+      throw error;
+    });
 
   const text = result.response?.text();
   if (!text) {

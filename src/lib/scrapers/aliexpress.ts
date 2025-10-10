@@ -17,11 +17,112 @@ export async function scrapeAliExpress(url: string): Promise<ScrapedProduct> {
 
   const html = await response.text();
 
-  return extractProductWithGemini({
+  const product = await extractProductWithGemini({
     url,
     source: "AliExpress",
     html,
     instructions:
-      "Identifique informações confiáveis do produto no AliExpress. Priorize valores oficiais do comerciante (preço, impostos) e ignore recomendações/promoções não relacionadas.",
+      "Identifique informações confiáveis do produto no AliExpress. Priorize valores oficiais do comerciante (preço, impostos) e ignore recomendações/promoções não relacionadas. Sempre devolva price e estimatedTax como strings com símbolo de moeda (ex.: 'R$ 123,45'). Se não encontrar impostos estimados, devolva null.",
   });
+
+  const fallbackPrice = extractAliExpressPrice(html);
+  const fallbackTax = extractAliExpressTax(html);
+
+  return {
+    ...product,
+    price: normalizeCurrencyOutput(product.price, fallbackPrice),
+    estimatedTax: normalizeCurrencyOutput(product.estimatedTax, fallbackTax),
+  };
+}
+
+function normalizeCurrencyOutput(
+  current: ScrapedProduct["price"],
+  fallback: string | null,
+) {
+  const fallbackSanitized = fallback ? sanitizeCurrency(fallback) : "";
+
+  if (fallbackSanitized) {
+    return fallbackSanitized;
+  }
+
+  if (typeof current === "number") {
+    return current;
+  }
+
+  if (typeof current === "string" && hasCurrencyHint(current)) {
+    return sanitizeCurrency(current);
+  }
+
+  if (typeof current === "string") {
+    const sanitized = sanitizeCurrency(current);
+    return sanitized || undefined;
+  }
+
+  return current ?? undefined;
+}
+
+function hasCurrencyHint(value: string) {
+  return /(?:R\$|US\$|€|£|¥|\$)/i.test(value);
+}
+
+function sanitizeCurrency(value: string) {
+  const normalized = value
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/(R\$|US\$|€|£|¥|\$)\s*/gi, (match) => `${match.trim()} `)
+    .trim();
+
+  if (!normalized) return "";
+
+  if (hasCurrencyHint(normalized)) {
+    return normalized;
+  }
+
+  const signMatch = normalized.match(/^([+-])/);
+  const sign = signMatch ? signMatch[1] : "";
+  const numeric = sign ? normalized.slice(1).trim() : normalized;
+  if (!numeric) return "";
+
+  return sign ? `${sign}R$ ${numeric}` : `R$ ${numeric}`;
+}
+
+function extractAliExpressPrice(html: string): string | null {
+  const patterns = [
+    /"displayPrice"\s*:\s*"([^"]+)"/i,
+    /"salePrice"\s*:\s*"([^"]+)"/i,
+    /"price"\s*:\s*"([^"]+)"/i,
+    /"formattedAmount"\s*:\s*"([^"]+)"/i,
+    /"activityPrice"\s*:\s*"([^"]+)"/i,
+    />\s*(R\$\s?[\d.,]+)\s*<\/span/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    const value = match?.[1];
+    if (value) {
+      const candidate = sanitizeCurrency(value);
+      if (candidate) return candidate;
+    }
+  }
+
+  return null;
+}
+
+function extractAliExpressTax(html: string): string | null {
+  const patterns = [
+    /impostos?\s+estimados?[^+\-R$€£¥]*([+\-]?\s?(?:R\$|US\$|€|£|¥|\$)\s?[\d.,]+)/i,
+    /estimated\s+tax[^+\-R$€£¥]*([+\-]?\s?(?:R\$|US\$|€|£|¥|\$)\s?[\d.,]+)/i,
+    /taxa\s+estimada[^+\-R$€£¥]*([+\-]?\s?(?:R\$|US\$|€|£|¥|\$)\s?[\d.,]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    const value = match?.[1];
+    if (value) {
+      const candidate = sanitizeCurrency(value);
+      if (candidate) return candidate;
+    }
+  }
+
+  return null;
 }

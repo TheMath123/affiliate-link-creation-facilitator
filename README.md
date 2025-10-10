@@ -1,6 +1,6 @@
 ## Visão geral
 
-Aplicação Next.js que facilita a criação de material para links de afiliado a partir de produtos do Mercado Livre e AliExpress. A interface permite colar a URL de um produto, coleta metadados relevantes por meio de scraping e disponibiliza título, descrição e galeria de imagens preparados para reutilização.
+Aplicação Next.js que facilita a criação de material para links de afiliado a partir de produtos do Mercado Livre, AliExpress e Shopee. A interface permite colar a URL de um produto, coleta metadados relevantes por meio de scraping e disponibiliza título, descrição e galeria de imagens preparados para reutilização.
 
 - **Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS 4, Radix UI, Sonner, Biome.
 - **Extração:** Gemini 1.5 Flash analisa o HTML bruto e retorna JSON estruturado.
@@ -9,10 +9,10 @@ Aplicação Next.js que facilita a criação de material para links de afiliado 
 
 ## Como funciona
 
-1. Usuário informa a URL do produto (mercadolivre.com ou aliexpress.com) no formulário principal.
+1. Usuário informa a URL do produto (mercadolivre.com, aliexpress.com ou shopee.) no formulário principal.
 2. O componente `ScraperForm` aciona a server action `scrapeProduct` (`src/actions/scraper.ts`).
 3. A server action chama a rota interna `POST /api/scrape`, que valida a URL e delega para `src/lib/scrapers`.
-4. O `scrapeProduct` da camada de biblioteca identifica a origem e aciona o scraper específico (`mercado-livre.ts` ou `aliexpress.ts`).
+4. O `scrapeProduct` da camada de biblioteca identifica a origem e aciona o scraper específico (`mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`).
 5. Cada scraper faz `fetch` da página, envia o HTML para o Gemini e recebe JSON com título, descrição, imagens, preço e impostos.
 6. A resposta é exibida em `ProductResult` e armazenada no histórico local (`localStorage`).
 
@@ -28,6 +28,7 @@ npm run dev
 
 - A aplicação assume que `APP_URL` aponta para a origem onde o app está rodando (por exemplo `http://localhost:3000`).
 - `GEMINI_API_KEY` habilita chamadas ao modelo da família Gemini para extração.
+- `GEMINI_MODEL` (opcional) permite trocar o modelo padrão (`gemini-1.5-flash`).
 - `NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN` e `NEXT_PUBLIC_BETTER_STACK_INGESTING_URL` são necessários quando o logging centralizado estiver habilitado (via `@logtail/next`).
 
 ## Scripts úteis
@@ -42,7 +43,7 @@ npm run dev
 
 No momento o projeto não possui suíte automatizada; execute `npm run lint` antes de criar commits e valide manualmente os fluxos principais:
 
-- Extração de produto do Mercado Livre e AliExpress.
+- Extração de produto do Mercado Livre, AliExpress e Shopee.
 - Persistência e remoção no histórico local.
 - Visualização e cópia de título/descrição/imagens.
 

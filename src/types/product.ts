@@ -5,5 +5,5 @@ export interface ScrapedProduct {
   estimatedTax?: number | string;
   images: string[];
   url: string;
-  source: "Mercado Livre" | "AliExpress" | "Desconhecido";
+  source: "Mercado Livre" | "AliExpress" | "Shopee" | "Desconhecido";
 }

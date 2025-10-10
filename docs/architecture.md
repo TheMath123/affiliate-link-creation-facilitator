@@ -2,7 +2,7 @@
 
 ## Objetivo do sistema
 
-Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre e AliExpress) para acelerar a produção de páginas e materiais de afiliados. O sistema entrega título, descrição, imagens, preço e impostos estimados em uma interface única, replicável e centrada na experiência do afiliado.
+Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre, AliExpress e Shopee) para acelerar a produção de páginas e materiais de afiliados. O sistema entrega título, descrição, imagens, preço e impostos estimados em uma interface única, replicável e centrada na experiência do afiliado.
 
 ## Visão macro da arquitetura
 
@@ -15,9 +15,9 @@ Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre
   |                                   v
   |                          [lib/scrapers/index]
   |                                   |
-  |            +----------------------+----------------+
-  |            v                                       v
-  |   [lib/scrapers/mercado-livre]          [lib/scrapers/aliexpress]
+  |            +----------------------+----------------+----------------+
+  |            v                                       v                v
+  |   [lib/scrapers/mercado-livre]          [lib/scrapers/aliexpress]  [lib/scrapers/shopee]
   |                                   |
   |                                   v
   |                           [lib/ai/gemini]
@@ -41,7 +41,7 @@ Automatizar a coleta de informações de produtos de marketplaces (Mercado Livre
 3. Rota `POST /api/scrape` (`src/app/api/scrape/route.ts`):
    - Garante que o corpo contenha `url` válida.
    - Chama `scrapeProduct` da biblioteca (`src/lib/scrapers/index.ts`).
-4. `src/lib/scrapers/index.ts` detecta a origem e delega para `mercado-livre.ts` ou `aliexpress.ts`.
+4. `src/lib/scrapers/index.ts` detecta a origem e delega para `mercado-livre.ts`, `aliexpress.ts` ou `shopee.ts`.
 5. Scraper específico: realiza `fetch` com cabeçalhos que imitam navegadores reais, passa HTML e contexto para `extractProductWithGemini` (`src/lib/ai/gemini.ts`) e valida o JSON retornado.
 6. Resposta retorna como `ScrapedProduct` (`src/types/product.ts`). A UI atualiza o estado e renderiza `ProductResult`.
 7. Dados são persistidos em `localStorage` e emitido evento `history-updated` para sincronizar o componente `ScraperHistory`.
@@ -61,10 +61,10 @@ export interface ScrapedProduct {
   title: string;
   description?: string;
   price?: number | string;
-  estimatedTax?: string | string;
+  estimatedTax?: number | string;
   images: string[];
   url: string;
-  source: "Mercado Livre" | "AliExpress" | "Desconhecido";
+  source: "Mercado Livre" | "AliExpress" | "Shopee" | "Desconhecido";
 }
 ```
 
@@ -92,6 +92,13 @@ export interface ScrapedProduct {
 - O JSON retornado é higienizado e validado antes de ser repassado à API.
 - Continua resiliente a variações de markup, delegando ajustes ao modelo sem necessidade de atualizar seletores.
 
+### Shopee (`src/lib/scrapers/shopee.ts`)
+
+- Reproduz cabeçalhos de navegador e coleta o HTML da página de produto da Shopee Brasil.
+- Instrui o Gemini a retornar título, descrição, imagens, preço e possíveis impostos como strings com símbolo de moeda.
+- Implementa fallback local para preço/impostos usando metatags (`og:price:amount`, `product:tax:amount`) e trechos JSON embutidos.
+- Normaliza moedas, preserva sinais e garante que o valor final seja exibido mesmo quando o modelo não encontrar campos.
+
 ### Módulo Gemini (`src/lib/ai/gemini.ts`)
 
 - Singleton do `GoogleGenerativeAI` instanciado com `GEMINI_API_KEY`.
@@ -111,7 +118,8 @@ export interface ScrapedProduct {
 ## Configuração e variáveis de ambiente
 
 - `APP_URL`: origem base usada pela server action para invocar `api/scrape`. Necessário em ambientes onde `fetch` do servidor precisa de URL absoluta (ex.: Vercel serverless).
-- `GEMINI_API_KEY`: credencial obrigatória para o módulo `lib/ai/gemini.ts` consumir o modelo `gemini-1.5-flash-latest`.
+- `GEMINI_API_KEY`: credencial obrigatória para o módulo `lib/ai/gemini.ts` consumir o modelo `gemini-1.5-flash` (ou outro definido em `GEMINI_MODEL`).
+- `GEMINI_MODEL`: opcional, sobrescreve o nome do modelo usado pelo Gemini (default: `gemini-1.5-flash`).
 - `NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN`, `NEXT_PUBLIC_BETTER_STACK_INGESTING_URL`: habilitam logging centralizado com Better Stack/Logtail.
 - `env.ts` usa `@t3-oss/env-nextjs` + Zod para validação em build/runtime.
 
