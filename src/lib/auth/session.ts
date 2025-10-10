@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "crypto";
+import { cookies } from "next/headers";
 import { env } from "@/env";
 
 export const SESSION_COOKIE_NAME = "affiliate_session";
@@ -30,4 +31,24 @@ export function isValidSessionToken(token?: string | null) {
   } catch {
     return false;
   }
+}
+
+export function persistSession() {
+  const token = createSessionToken();
+  cookies().set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    path: "/",
+  });
+}
+
+export function clearSession() {
+  cookies().delete(SESSION_COOKIE_NAME);
+}
+
+export function hasValidSession() {
+  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  return isValidSessionToken(token);
 }
