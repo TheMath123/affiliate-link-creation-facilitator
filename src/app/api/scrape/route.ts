@@ -1,8 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { scrapeProduct } from "@/lib/scrapers";
+import { SESSION_COOKIE_NAME, isValidSessionToken } from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    if (!isValidSessionToken(sessionToken)) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {
